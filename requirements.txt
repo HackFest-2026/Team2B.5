@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic
+python-multipart
+python-jose[cryptography]
+PyMuPDF
+python-docx
+pandas
+openpyxl
+
+email-validator
+requests
+weasyprint
