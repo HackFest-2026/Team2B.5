@@ -12,3 +12,4 @@ openpyxl
 email-validator
 requests
 weasyprint
+python-dotenv
