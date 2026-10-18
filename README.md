@@ -1,93 +1,357 @@
-# VeriMerge — Evidence Intelligence Prototype
+# Problem Statement
 
-VeriMerge is a local demonstration prototype for document ingestion, evidence-grounded question answering, document review, and report generation.
+Legal documents often contain complex clauses, obligations, deadlines, and potential risks that are difficult to identify quickly. Manually reviewing lengthy agreements can be time-consuming, and sending confidential documents to cloud-based AI services can introduce privacy concerns.
 
-## What is included
+VeriMerge aims to simplify legal document triage by helping users understand document contents, identify potentially important or conflicting information, and find supporting passages using a locally running AI model.
 
-- Next.js dashboard with account creation/sign-in, workspace creation, document upload, evidence-grounded Q&A, document assistants, and report export.
-- FastAPI backend with SQLite persistence, bearer-token authentication, file text extraction, SHA-256 fingerprints, chunk storage, and workspace-scoped project/document operations.
-- Supported upload formats: `.pdf`, `.docx`, `.txt`, `.csv`, `.xlsx`, `.xls` (maximum 15 MB by default).
+# VeriMerge — Private Legal Document Triage Agent
 
-## Run locally (Windows PowerShell)
+**VeriMerge** is an AI-assisted legal document analysis application designed to help users review legal documents more efficiently while prioritizing local processing and document privacy.
 
-### 1. Start the backend
+The project combines a web interface, a Python backend, document processing, evidence retrieval, and local language-model integration to support document understanding and preliminary risk review.
 
-From the `verimerge` project root:
+> **Important:** VeriMerge is an assistance tool, not a substitute for a qualified lawyer. Its outputs should be reviewed by a human before being used to make legal decisions.
 
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-$env:SECRET_KEY = "replace-with-a-long-random-local-secret"
-uvicorn backend.main:app --reload --port 8000
+## Problem Statement and Motivation
+
+Legal agreements, contracts, policies, and other formal documents can be lengthy and difficult to understand. Important obligations, deadlines, unusual clauses, and inconsistencies may be overlooked during manual review.
+
+Traditional manual review takes time, while cloud-based AI tools may require users to share confidential material with external services.
+
+VeriMerge addresses these challenges by aiming to provide:
+
+- Easier access to information contained in legal documents.
+- Plain-language assistance for understanding document content.
+- Retrieval of relevant passages to support answers.
+- Identification of potentially important details and inconsistencies.
+- A privacy-conscious workflow using a locally running language model.
+
+## Key Features
+
+### 1. Document Upload and Processing
+
+- Upload supported documents through the web interface.
+- Extract document text for analysis.
+- Organize documents within a project.
+- Retrieve relevant text passages to support document questions.
+
+The current implementation's supported file types and size limits depend on the backend configuration.
+
+### 2. Ask Questions About Documents
+
+Users can ask questions about uploaded documents in natural language.
+
+The system is designed to retrieve relevant passages and use the available language model to help formulate answers grounded in document content.
+
+### 3. Evidence-Based Responses
+
+VeriMerge aims to connect responses to relevant document passages so that users can inspect the underlying evidence rather than relying only on generated text.
+
+Users should verify important statements against the original document, especially when a response concerns a legal obligation, deadline, or potential risk.
+
+### 4. Legal Document Triage
+
+The application is intended to assist with preliminary review by helping users examine:
+
+- Important clauses and obligations.
+- Dates, deadlines, and numerical details.
+- Potentially conflicting information.
+- Sensitive or significant document content.
+- Findings that may require additional human review.
+
+Automated findings are preliminary indicators, not definitive legal conclusions.
+
+### 5. Local AI Integration
+
+VeriMerge supports local language-model integration through Ollama. The development configuration uses **Gemma 4 E2B (`gemma4:e2b`)**.
+
+Running the model locally can reduce the need to send document content to an external AI inference provider. However, complete privacy depends on the entire application workflow, configuration, and any external services used.
+
+### 6. Web-Based Interface
+
+The application provides a web interface for interacting with the backend, managing document-related workflows, and asking questions about document content.
+
+## Technology Stack
+
+| Component | Technology |
+|---|---|
+| Frontend | Next.js, React, TypeScript |
+| Backend | Python, FastAPI |
+| Local AI runtime | Ollama |
+| Language model | Gemma 4 E2B (`gemma4:e2b`) |
+| Document processing | PyMuPDF and Python document-processing libraries |
+| API communication | HTTP and REST endpoints |
+| Version control | Git and GitHub |
+
+The exact dependencies and versions are defined in `package.json` and `requirements.txt`.
+
+## System Architecture
+
+The application follows a frontend–backend architecture with local AI integration.
+
+```text
+                 USER
+                   |
+                   v
+          Next.js Web Interface
+                   |
+                   v
+             FastAPI Backend
+                   |
+          +--------+---------+
+          |                  |
+          v                  v
+   Document Processing   Evidence Retrieval
+          |                  |
+          +--------+---------+
+                   |
+                   v
+            Local Ollama API
+                   |
+                   v
+            Gemma 4 E2B
+                   |
+                   v
+       Answer / Analysis Response
+                   |
+                   v
+          Next.js Web Interface
 ```
 
-Check that `http://127.0.0.1:8000/ping` returns `{"ping":"pong"}`.
+The diagram represents the intended high-level workflow. The actual sequence of processing depends on the endpoint and feature being used.
 
-### 2. Start the frontend in a second terminal
+## Project Structure
+
+The repository contains the frontend, backend, and dependency files needed for development.
+
+```text
+verimerge/
+├── app/                  # Next.js application pages and styles
+├── backend/              # Python backend and API endpoints
+├── package.json          # Frontend dependencies and scripts
+├── requirements.txt      # Python dependencies
+├── README.md             # Project documentation
+├── LICENSE               # Open-source license
+└── .gitignore            # Files excluded from Git
+```
+
+Other configuration files and directories may also be present in the repository.
+
+## Prerequisites
+
+Install the following software before running the application:
+
+- Git
+- Node.js and npm
+- Python 3.11 or another version compatible with the project's dependencies
+- Ollama for local model inference
+
+You should also have enough available disk space and memory to run the selected language model.
+
+## Installation and Setup
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/ZERODAY-2026/Aura-Farmer.git
+cd Aura-Farmer
+```
+
+### 2. Download the local language model
+
+Install Ollama from [ollama.com](https://ollama.com/).
+
+Open a terminal and run:
+
+```bash
+ollama pull gemma4:e2b
+```
+
+Start the model to verify that it can run:
+
+```bash
+ollama run gemma4:e2b
+```
+
+You can exit the interactive model session after confirming that it responds.
+
+### 3. Configure the environment
+
+Create a `.env` file in the project root if the backend configuration requires one.
+
+For the local Ollama setup, the relevant values are:
+
+```dotenv
+LLM_PROVIDER=ollama
+OLLAMA_MODEL=gemma4:e2b
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+```
+
+Set any other required environment variables according to the backend configuration and `.env.example`, if present.
+
+**Security:** Never commit `.env`, authentication secrets, access tokens, or private document contents to GitHub.
+
+### 4. Set up the Python backend
+
+From the repository root, create a virtual environment:
+
+**Windows PowerShell**
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+Install the Python dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Start the backend:
+
+```powershell
+cd backend
+python -m uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+Keep this terminal open while using the application.
+
+### 5. Start the frontend
+
+Open a second terminal and navigate to the repository root:
+
+```powershell
+cd C:\path\to\Aura-Farmer
+```
+
+Replace the example path with the actual location where you cloned the repository.
+
+Install the frontend dependencies:
 
 ```powershell
 npm install
-$env:NEXT_PUBLIC_API_URL = "http://127.0.0.1:8000"
+```
+
+Start the development server:
+
+```powershell
 npm run dev
 ```
 
-Open `http://localhost:3000`. Keep the Ollama app running in the background; VeriMerge uses the local `llama3.2` model by default and does not require a cloud API key.
+Open the local address printed by Next.js, typically:
 
-## Suggested live demo flow
+`http://localhost:3000`
 
-1. Register with a new email and a password of at least eight characters.
-2. Create a workspace named `Demo Evidence Review`.
-3. Upload two source documents (the included `test_files` directory contains examples).
-4. Ask a question about the uploaded sources and inspect the evidence references.
-5. Run the document assistants to review entities, conflicts, and sensitive-information indicators.
-6. Generate a report and export it for review.
+### 6. Verify the backend
 
-## Important limitations — be transparent during judging
+With the backend running, open:
 
-- This is a demonstrable prototype, not a production security-reviewed service. Configure a strong secret, HTTPS, strict origins, rate limits, and a managed database before deployment.
-- QA retrieves relevant source passages and uses the locally installed Ollama `llama3.2` model by default. Model answers are grounded in retrieved passages and citations are assembled server-side from the retrieved chunks. Without a configured provider, the app transparently falls back to excerpts.
-- The current conflict detector is heuristic and can flag repeated numeric values; treat these as review candidates, not proven contradictions.
-- Scanned/image-only PDFs may need OCR, which is not currently included.
-- Access classification and redaction are not yet implemented as a complete security gate. Do not upload classified, highly sensitive, or unauthorized data to this prototype.
-- Registration requires a unique email. Existing demo accounts with legacy SHA-256 password hashes remain verifiable; new passwords use PBKDF2.
+`http://127.0.0.1:8000/ping`
 
-## Configuration
+The current backend provides a ping endpoint that can be used as a basic connectivity check.
 
-- `NEXT_PUBLIC_API_URL`: frontend API base URL (defaults to `http://127.0.0.1:8000`).
-- `SECRET_KEY`: JWT signing secret. Set a strong random value outside local demos.
-- `DATABASE_URL`: SQLAlchemy URL (defaults to local SQLite `sqlite:///./verimerge.db`).
-- `FRONTEND_ORIGIN`: primary frontend origin allowed by CORS (defaults to `http://localhost:3000`).
-- `UPLOAD_DIR`: upload storage directory (defaults to `./uploaded_files`).
-- `MAX_UPLOAD_BYTES`: upload cap in bytes (defaults to 15 MiB).
-- `LLM_PROVIDER`: defaults to `ollama`; set to `cloud` only if you deliberately want to use a configured cloud model.
-- `OLLAMA_BASE_URL`: local Ollama address (defaults to `http://127.0.0.1:11434`).
-- `OLLAMA_MODEL`: local model name (defaults to `llama3.2`).
+The model status endpoint can also be checked at:
 
-## Coordinated agent pipeline (prototype)
+`http://127.0.0.1:8000/model-status`
 
-After signing in and uploading at least one `READY` document, select **Review all documents** in the Document assistants section. The backend endpoint is `POST /projects/{project_id}/pipeline`.
+A successful status response indicates whether the configured local model is available according to the backend.
 
-The pipeline currently runs these review stages:
+## How to Use VeriMerge
 
-1. **Ingestion & Provenance** — reports processed documents, missing extracted text, and exact duplicate SHA-256 fingerprints.
-2. **Evidence & Entity** — groups repeated exact-value patterns (emails, dates, amounts, and capitalized phrases) with source document and context references.
-3. **Conflict Detection** — flags possible differences where a shared nearby label has different values across documents. These are candidates for human review, not confirmed contradictions.
-5. **Security Screening** — flags patterns such as email addresses, phone-number candidates, government-ID keywords, and credential keywords for review. It does not yet enforce role-based access control or redact files.
-6. **Report Composer** — returns a structured result summary and a list of source documents with fingerprints.
+1. Start Ollama and ensure the configured model is available.
+2. Start the FastAPI backend.
+3. Start the Next.js frontend.
+4. Open the web application in your browser.
+5. Sign in or create a project if prompted.
+6. Upload a supported document that you are permitted to process.
+7. Ask a question about information contained in the document.
+8. Review the response and its supporting passages, where available.
+9. Verify important findings against the original document.
 
-The pipeline is a functional prototype, not six independent autonomous LLMs. Pattern-based stages are deterministic heuristics; the QA endpoint can use an OpenAI-compatible LLM when configured. OCR for scanned PDFs, robust semantic entity resolution, stronger semantic contradiction detection, production-grade DLP/access control, and comprehensive integration/browser testing remain future work. Treat results as review assistance and validate them against original sources.
+Begin with a non-sensitive test document while validating a new installation.
 
+## Privacy and Security
 
-## Live language-model responses (local or cloud)
+Privacy is an important design consideration for VeriMerge.
 
-VeriMerge does not hard-code fake chatbot answers. To generate open-ended answers and agent explanations, it needs an actual language model. You can use a local model without an API key:
+The local Ollama configuration allows language-model inference to run on the user's machine rather than requiring a hosted model API for every request.
 
-1. Install Ollama from https://ollama.com/ and start it.
-2. In PowerShell, run `ollama pull llama3.2`. The first download may take a while.
-3. Keep the Ollama app/service running and restart the VeriMerge backend. The default configuration checks `http://127.0.0.1:11434` automatically.
-4. Run a document question or the agent pipeline again. The agent cards identify whether their explanations were model-generated or rule-based.
+However, **local model inference alone does not guarantee end-to-end privacy**. Backend routes, document storage, authentication, logging, networking, and other integrations must also be reviewed.
 
-Alternatively, configure `LLM_API_KEY`, `LLM_BASE_URL`, and `LLM_MODEL` in the backend environment for a compatible cloud provider. Never put private keys in frontend variables or commit a real `.env` file.
+Recommended precautions:
 
-If neither local Ollama nor a cloud model is available, VeriMerge still shows transparent rule-based checks, but it cannot truthfully claim to be generating general chatbot responses. Conflict detection and security screening remain heuristic review aids.
+- Keep `.env` and other secret files out of version control.
+- Do not upload real confidential legal documents to public repositories.
+- Use synthetic or non-sensitive documents for demonstrations.
+- Restrict access to the application and its stored documents.
+- Review application logs and external network requests before processing sensitive material.
+- Use a strong secret key and appropriate authentication settings.
+- Verify that all document-analysis paths use the intended local model configuration.
+
+The project's privacy properties should be validated through code review and testing before production use.
+
+## Limitations
+
+VeriMerge is an evolving prototype. Users should be aware that:
+
+- AI-generated answers can be inaccurate or incomplete.
+- Retrieved passages may not contain all information needed to answer a question.
+- Automated conflict detection may produce false positives or miss subtle inconsistencies.
+- Text extraction may not work correctly for every PDF, scanned page, or complex document layout.
+- A generated summary or risk flag is not a legal opinion.
+- Production use requires additional testing of authentication, authorization, storage, and privacy controls.
+
+Always inspect the source document and consult a qualified legal professional for consequential legal questions.
+
+## Testing and Verification
+
+Before using the application for a demonstration, verify the following:
+
+- The frontend starts successfully.
+- The backend health endpoint responds.
+- Ollama can run the configured Gemma model.
+- The backend reports the expected model status.
+- A supported test document can be uploaded.
+- Document questions return useful answers.
+- Retrieved evidence corresponds to the source document.
+- Missing evidence and model failures are handled clearly.
+- Secrets and private files are excluded from the repository.
+
+These are recommended verification steps; listing them does not imply that every test has already passed.
+
+## Future Improvements
+
+Potential areas for further development include:
+
+- More reliable clause and obligation extraction.
+- Improved detection of inconsistencies across multiple documents.
+- Stronger evidence attribution and citation validation.
+- Better handling of scanned PDFs and OCR.
+- Explicit uncertainty indicators for unsupported conclusions.
+- Enhanced document access controls and privacy auditing.
+- Automated tests for retrieval, model responses, and API endpoints.
+- Clearer guidance on when users should seek professional legal advice.
+
+## Contributing
+
+Contributions and feedback are welcome.
+
+1. Fork the repository or create a branch if you have collaborator access.
+2. Make a focused change.
+3. Test the affected functionality.
+4. Submit a pull request describing the change and its verification.
+
+Do not include confidential documents, credentials, or private user data in issues, commits, or pull requests.
+
+## License
+
+This project is distributed under the terms of the MIT License. See the [`LICENSE`](LICENSE) file for the full license text.
+
+## Disclaimer
+
+VeriMerge is intended to support preliminary document review and information retrieval. It does not provide legal advice, establish legal validity, or replace a lawyer. AI-generated outputs may contain errors and must be independently checked before being relied upon.
+
+## Repository
+
+**GitHub:** https://github.com/ZERODAY-2026/Aura-Farmer
