@@ -369,84 +369,72 @@ async def upload_document(project_id: str, file: UploadFile = File(...), current
 
 
 @app.get("/projects/{project_id}/search")
-def keyword_search(project_id: str, q: str, current: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Keyword (lexical) search over stored chunks. Returns ranked snippets with source info.
-    If an LLM embedding provider is configured (OPENAI_API_KEY), we also offer a semantic fallback.
-    """
+def keyword_search(
+    project_id: str,
+    q: str,
+    current: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Search stored document chunks locally without external AI services."""
     if not q.strip():
-        raise HTTPException(status_code=400, detail="Query parameter 'q' required")
+        raise HTTPException(
+            status_code=400,
+            detail="Query parameter 'q' required",
+        )
+
     ensure_project_access(project_id, current, db)
-    # First try semantic search if provider available
-    openai_key = os.getenv("OPENAI_API_KEY")
-    if openai_key:
-        try:
-            import openai
-            openai.api_key = openai_key
-            # Simple embedding of query
-            emb_resp = openai.Embedding.create(model="text-embedding-ada-002", input=q)
-            query_emb = emb_resp["data"][0]["embedding"]
-            # Retrieve all chunk embeddings (stored as JSON text field for demo purposes)
-            # For simplicity, we compute similarity on the fly (inefficient but works for small demo)
-            chunks = db.query(Chunk).filter(Chunk.project_id == project_id).all()
-            def cosine(a, b):
-                import math
-                return sum(x*y for x, y in zip(a, b)) / (math.sqrt(sum(x*x for x in a)) * math.sqrt(sum(y*y for y in b)))
-            scored = []
-            for chunk in chunks:
-                # get or compute embedding for chunk text
-                try:
-                    emb = openai.Embedding.create(model="text-embedding-ada-002", input=chunk.text[:1000])
-                    vec = emb["data"][0]["embedding"]
-                    score = cosine(query_emb, vec)
-                except Exception:
-                    score = 0
-                if score > 0.5:  # threshold
-                    scored.append((score, chunk))
-            scored.sort(key=lambda x: x[0], reverse=True)
-            results = []
-            for score, chunk in scored[:10]:
-                doc = db.query(Document).filter(Document.id == chunk.document_id).first()
-                snippet = chunk.text[:200]
-                # Filter out snippets that are only numbers or lack meaningful words
-                if re.fullmatch(r"\s*\d+(\s*\d+)*\s*", snippet):
-                    continue
-                results.append({
-                    "chunk_id": chunk.id,
-                    "document_id": chunk.document_id,
-                    "filename": doc.filename if doc else None,
-                    "snippet": snippet,
-                    "index": chunk.index,
-                    "page_number": getattr(chunk, "page_number", None),
-                    "score": round(score, 3),
-                })
-            return {"query": q, "semantic": True, "results": results}
-        except Exception as e:
-            # fallback to lexical if any error
-            pass
-    # Lexical fallback
-    chunks = db.query(Chunk).filter(Chunk.project_id == project_id).all()
+
+    query_terms = _token_set(q)
+    chunks = db.query(Chunk).filter(
+        Chunk.project_id == project_id
+    ).all()
+
     results = []
     seen = set()
+
     for chunk in chunks:
-        if q.lower() in chunk.text.lower():
-            snippet = chunk.text[:200]
-            # Skip numeric‑only snippets
-            if re.fullmatch(r"\s*\d+(\s*\d+)*\s*", snippet):
-                continue
-            key = (chunk.document_id, snippet)
-            if key in seen:
-                continue
-            seen.add(key)
-            doc = db.query(Document).filter(Document.id == chunk.document_id).first()
-            results.append({
-                "chunk_id": chunk.id,
-                "document_id": chunk.document_id,
-                "filename": doc.filename if doc else None,
-                "snippet": snippet,
-                "index": chunk.index,
-                "page_number": getattr(chunk, "page_number", None),
-            })
-    return {"query": q, "semantic": False, "results": results}
+        text_lower = chunk.text.lower()
+        matching_terms = sum(
+            1 for term in query_terms if term in text_lower
+        )
+        exact_match = q.strip().lower() in text_lower
+
+        if not exact_match and matching_terms == 0:
+            continue
+
+        snippet = chunk.text[:200]
+
+        if re.fullmatch(r"\s*\d+(\s*\d+)*\s*", snippet):
+            continue
+
+        key = (chunk.document_id, snippet)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        doc = db.query(Document).filter(
+            Document.id == chunk.document_id
+        ).first()
+
+        results.append({
+            "chunk_id": chunk.id,
+            "document_id": chunk.document_id,
+            "filename": doc.filename if doc else None,
+            "snippet": snippet,
+            "index": chunk.index,
+            "page_number": getattr(chunk, "page_number", None),
+            "score": round(
+                matching_terms / max(len(query_terms), 1), 3
+            ),
+        })
+
+    results.sort(key=lambda item: item["score"], reverse=True)
+
+    return {
+        "query": q,
+        "semantic": False,
+        "results": results[:10],
+    }
 
 def call_llm(system_prompt: str, user_prompt: str, timeout: int = 90) -> Optional[str]:
     """Use a configured OpenAI-compatible provider, or a local Ollama model.
