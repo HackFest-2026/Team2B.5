@@ -1,0 +1,36 @@
+STUDENT PROJECT REPORT
+
+Report Date: 11 October 2026
+
+Student Name: Ayaan Mohsin
+
+Division: A
+
+Roll Number: 23
+
+Student Registration Number (SRN): 01FE23BCS001
+
+Project Title: VeriMerge — AI-Assisted Document Intelligence and Verification System
+
+Document 1 Title: Project Overview
+
+Purpose:
+VeriMerge is a document intelligence system designed to help users upload documents, ask questions about their contents, identify conflicting information, verify claims, and generate understandable reports.
+
+Project Details:
+The system accepts documents as input and uses their content to answer user questions. Answers should be grounded in the uploaded documents. When evidence is unavailable, the system should clearly state that the information was not found.
+
+Expected Features:
+1. Document upload and document listing.
+2. Questions and answers based on uploaded documents.
+3. Identification of contradictory statements between documents.
+4. Verification of claims using available document evidence.
+5. Generation of a readable report containing findings and supporting evidence.
+
+Project Status:
+The document upload interface has been implemented. Question answering and report generation are under testing.
+
+Testing Note:
+The project team has not yet completed all verification tests. The presence of a feature in this document does not prove that the feature works correctly.
+
+END OF DOCUMENT

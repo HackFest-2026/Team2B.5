@@ -1,7 +1,9 @@
 # backend/main.py
 import os
+from pathlib import Path
 from dotenv import load_dotenv
-load_dotenv()
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 import hashlib
 import hmac
 import uuid
@@ -659,7 +661,7 @@ def agent_chat(project_id: str, payload: dict, current: User = Depends(get_curre
         user_prompt = f"CONVERSATION SO FAR:\n{prior}\n\n{user_prompt}"
     answer = call_llm(system_prompt, user_prompt, timeout=150)
     if not answer:
-        raise HTTPException(status_code=503, detail="The local AI assistant is not responding. Make sure Ollama is running and llama3.2 is installed, then try again.")
+        raise HTTPException(status_code=503, detail="The local AI assistant did not return a response. Check that Ollama is running, the configured model is available, and the backend logs for details.")
     return {"answer": answer, "sources": sources, "assistant": role}
 
 

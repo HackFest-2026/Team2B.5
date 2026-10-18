@@ -1,0 +1,54 @@
+STUDENT PROJECT REPORT
+
+Report Date: 11 October 2026
+
+Student Name: Ayaan Mohsin
+
+Division: A
+
+Roll Number: 23
+
+Student Registration Number (SRN): 01FE23BCS001
+
+Project Title: VeriMerge — AI-Assisted Document Intelligence and Verification System
+
+Document 2 Title: Project Testing and Findings
+
+Purpose:
+This document records the current testing status and selected claims about VeriMerge.
+
+Claim 1:
+VeriMerge supports uploading documents and displaying them in the document list.
+
+Evidence:
+The upload interface and document list are available for testing. Successful operation must be confirmed through an actual test.
+
+Claim 2:
+VeriMerge has completed testing for question answering across all uploaded documents.
+
+Evidence:
+No complete test results have been recorded. This claim is currently UNVERIFIED.
+
+Claim 3:
+VeriMerge can identify conflicting information between documents.
+
+Evidence:
+Conflict detection is an intended feature. No documented test result is available to confirm its accuracy.
+
+Claim 4:
+VeriMerge generates a readable report containing findings and supporting evidence.
+
+Evidence:
+Report generation is under testing. The final output must be inspected before this claim can be confirmed.
+
+Testing Record:
+- Document upload: Interface implemented; successful upload requires testing.
+- Document-grounded question answering: Under testing.
+- Cross-document conflict detection: Not yet verified.
+- Claim verification: Not yet verified.
+- Readable report generation: Under testing.
+
+Important:
+Do not interpret an unverified claim as a confirmed fact. A missing test result is not proof that a feature is broken; it means there is insufficient evidence to confirm its status.
+
+END OF DOCUMENT
